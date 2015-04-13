@@ -1015,83 +1015,91 @@ class ExamController < ApplicationController
   end
 
   def generated_report4
-    if params[:student].nil?
-      if params[:exam_report].nil? or params[:exam_report][:batch_id].empty?
-        flash[:notice] = "#{t('select_a_batch_to_continue')}"
-        redirect_to :action=>'grouped_exam_report' and return
-      end
-    else
-      if params[:type].nil?
-        flash[:notice] = "#{t('invalid_parameters')}"
-        redirect_to :action=>'grouped_exam_report' and return
-      end
-    end
-    #grouped-exam-report-for-batch
-    if params[:student].nil?
-      @type = params[:type]
-      @batch = Batch.find(params[:exam_report][:batch_id])
-      @students=@batch.students.by_first_name
-      @student = @students.first  unless @students.empty?
-      if @student.blank?
-        flash[:notice] = "#{t('flash5')}"
-        redirect_to :action=>'grouped_exam_report' and return
-      end
-      if @type == 'grouped'
-        @grouped_exams = GroupedExam.find_all_by_batch_id(@batch.id)
-        @exam_groups = []
-        @grouped_exams.each do |x|
-          @exam_groups.push ExamGroup.find(x.exam_group_id)
+      #form validation from grouped_exam_report
+      if params[:student].nil?
+        if params[:exam_report].nil? or params[:exam_report][:batch_id].empty?
+          flash[:notice] = "#{t('select_a_batch_to_continue')}"
+          redirect_to :action=>'grouped_exam_report' and return
         end
       else
-        @exam_groups = ExamGroup.find_all_by_batch_id(@batch.id)
-        @exam_groups.reject!{|e| e.result_published==false}
-      end
-      general_subjects = Subject.find_all_by_batch_id(@batch.id, :conditions=>"elective_group_id IS NULL AND is_deleted=false")
-      student_electives = StudentsSubject.find_all_by_student_id(@student.id,:conditions=>"batch_id = #{@batch.id}")
-      elective_subjects = []
-      student_electives.each do |elect|
-        elective_subjects.push Subject.find(elect.subject_id)
-      end
-      @subjects = general_subjects + elective_subjects
-      @subjects.reject!{|s| s.no_exams==true}
-      exams = Exam.find_all_by_exam_group_id(@exam_groups.collect(&:id))
-      subject_ids = exams.collect(&:subject_id)
-      @subjects.reject!{|sub| !(subject_ids.include?(sub.id))}
-    else
-      @student = Student.find(params[:student])
-      @batch = @student.batch
-      @type  = params[:type]
-      if params[:type] == 'grouped'
-        @grouped_exams = GroupedExam.find_all_by_batch_id(@batch.id)
-        @exam_groups = []
-        @grouped_exams.each do |x|
-          @exam_groups.push ExamGroup.find(x.exam_group_id)
+        if params[:type].nil?
+          flash[:notice] = "#{t('invalid_parameters')}"
+          redirect_to :action=>'grouped_exam_report' and return
         end
-      else
-        @exam_groups = ExamGroup.find_all_by_batch_id(@batch.id)
-        @exam_groups.reject!{|e| e.result_published==false}
       end
-      general_subjects = Subject.find_all_by_batch_id(@student.batch.id, :conditions=>"elective_group_id IS NULL AND is_deleted=false")
-      student_electives = StudentsSubject.find_all_by_student_id(@student.id,:conditions=>"batch_id = #{@student.batch.id}")
-      elective_subjects = []
-      student_electives.each do |elect|
-        elective_subjects.push Subject.find(elect.subject_id)
-      end
-      @subjects = general_subjects + elective_subjects
-      @subjects.reject!{|s| s.no_exams==true}
-      exams = Exam.find_all_by_exam_group_id(@exam_groups.collect(&:id))
-      subject_ids = exams.collect(&:subject_id)
-      @subjects.reject!{|sub| !(subject_ids.include?(sub.id))}
-      if request.xhr?
-        render(:update) do |page|
-          page.replace_html   'grouped_exam_report', :partial=>"grouped_exam_report"
-        end
-      else
-        @students = Student.find_all_by_id(params[:student])
-      end
-    end
 
+      #form handling from grouped_exam_report
+      #grouped-exam-report-for-batch
+      if params[:student].nil?
+            @type = params[:type]
+            #@type = 'grouped'
+            @batch = Batch.find(params[:exam_report][:batch_id])
+            @students=@batch.students
+            @student = @students.first  unless @students.empty?
 
+            #batch has no student
+            if @students.empty? or @student.blank?
+              flash[:notice] = "#{t('flash5')}"
+              redirect_to :action=>'grouped_exam_report' and return
+            end
+
+            if @type == 'grouped'
+              @grouped_exams = GroupedExam.find_all_by_batch_id(@batch.id)
+              @exam_groups = []
+              @grouped_exams.each do |x|
+                @exam_groups.push ExamGroup.find(x.exam_group_id)
+              end
+            else
+              @exam_groups = ExamGroup.find_all_by_batch_id(@batch.id)
+              @exam_groups.reject!{|e| e.result_published==false}
+            end
+            general_subjects = Subject.find_all_by_batch_id(@batch.id, :conditions=>"elective_group_id IS NULL AND is_deleted=false")
+            student_electives = StudentsSubject.find_all_by_student_id(@student.id,:conditions=>"batch_id = #{@batch.id}")
+            elective_subjects = []
+            student_electives.each do |elect|
+              elective_subjects.push Subject.find(elect.subject_id)
+            end
+            #@subjects = Subject.all
+            @subjects = general_subjects + elective_subjects
+            @subjects.reject!{|s| s.no_exams==true}
+            exams = Exam.find_all_by_exam_group_id(@exam_groups.collect(&:id))
+            subject_ids = exams.collect(&:subject_id)
+            @subjects.reject!{|sub| !(subject_ids.include?(sub.id))}
+
+      #ajax request by clicking student name
+      else
+            @student = Student.find(params[:student])
+            @batch = @student.batch
+            @type  = params[:type]
+            if params[:type] == 'grouped'
+              @grouped_exams = GroupedExam.find_all_by_batch_id(@batch.id)
+              @exam_groups = []
+              @grouped_exams.each do |x|
+                @exam_groups.push ExamGroup.find(x.exam_group_id)
+              end
+            else
+              @exam_groups = ExamGroup.find_all_by_batch_id(@batch.id)
+              @exam_groups.reject!{|e| e.result_published==false}
+            end
+            general_subjects = Subject.find_all_by_batch_id(@student.batch.id, :conditions=>"elective_group_id IS NULL AND is_deleted=false")
+            student_electives = StudentsSubject.find_all_by_student_id(@student.id,:conditions=>"batch_id = #{@student.batch.id}")
+            elective_subjects = []
+            student_electives.each do |elect|
+              elective_subjects.push Subject.find(elect.subject_id)
+            end
+            @subjects = general_subjects + elective_subjects
+            @subjects.reject!{|s| s.no_exams==true}
+            exams = Exam.find_all_by_exam_group_id(@exam_groups.collect(&:id))
+            subject_ids = exams.collect(&:subject_id)
+            #@subjects.reject!{|sub| !(subject_ids.include?(sub.id))}
+            if request.xhr?
+              render(:update) do |page|
+                page.replace_html   'grouped_exam_report', :partial=>"grouped_exam_report"
+              end
+            else
+              @students = Student.find_all_by_id(params[:student])
+            end
+      end
   end
   def generated_report4_pdf
     #grouped-exam-report-for-batch

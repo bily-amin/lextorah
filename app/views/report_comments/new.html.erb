@@ -1,0 +1,10 @@
+<% remote_form_for @report_comment, :url => save_report_comment_path, :remote => true  do |f| %>
+  <%= f.error_messages %>
+  <p>
+    <%= f.label :comment %><br />
+    <%= f.text_area :comment %>
+  </p>
+  <p>
+    <%= f.submit 'Save' %>
+  </p>
+<% end %>

@@ -1,4 +1,21 @@
 ActionController::Routing::Routes.draw do |map|
+  map.resources :report_comments
+
+
+  #lextorah email plugin routes
+  map.email_batch 'students/email-batch',
+              :controller => 'LextorahEmail',
+              :action => 'prepare_email_for_batch'
+  map.send_email_to_batch 'students/send-email-to-batch',
+                  :controller => 'LextorahEmail',
+                  :action => 'email_batch'
+  #lextorah comment routes
+  map.save_report_comment 'students/:student/report-comment/save',
+              :controller => 'lextorahReportComment',
+              :action => 'save'
+  map.update_report_comment 'students/report-comment/:id/update',
+               :controller => 'lextorahReportComment',
+               :action => 'update'
 
   map.resources :grading_levels
   map.resources :ranking_levels, :collection => {:create_ranking_level=>[:get,:post], :edit_ranking_level=>[:get,:post], :update_ranking_level=>[:get,:post], :delete_ranking_level=>[:get,:post], :ranking_level_cancel=>[:get,:post], :change_priority=>[:get,:post]}

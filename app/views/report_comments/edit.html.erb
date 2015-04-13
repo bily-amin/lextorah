@@ -1,0 +1,16 @@
+<h1>Editing report_comment</h1>
+
+<% form_for(@report_comment) do |f| %>
+  <%= f.error_messages %>
+
+  <p>
+    <%= f.label :content %><br />
+    <%= f.text_area :content %>
+  </p>
+  <p>
+    <%= f.submit 'Update' %>
+  </p>
+<% end %>
+
+<%= link_to 'Show', @report_comment %> |
+<%= link_to 'Back', report_comments_path %>

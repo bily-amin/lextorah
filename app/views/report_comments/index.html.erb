@@ -1,0 +1,20 @@
+<h1>Listing report_comments</h1>
+
+<table>
+  <tr>
+    <th>Content</th>
+  </tr>
+
+<% @report_comments.each do |report_comment| %>
+  <tr>
+    <td><%=h report_comment.content %></td>
+    <td><%= link_to 'Show', report_comment %></td>
+    <td><%= link_to 'Edit', edit_report_comment_path(report_comment) %></td>
+    <td><%= link_to 'Destroy', report_comment, :confirm => 'Are you sure?', :method => :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New report_comment', new_report_comment_path %>
